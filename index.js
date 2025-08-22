@@ -32,7 +32,8 @@ client.on('message', msg => {
 
 const manualAdmins = [
     '102370629443806@lid',   // Ángel
-    '198036949057568@lid'    // Jhonel
+    '198036949057568@lid',    // Jhonel
+    '102370629443806@lid'       //borracho 
 ];
 
 client.on('message', async msg => {
