@@ -40,12 +40,18 @@ client.on('message', async msg => {
     if (msg.body.startsWith('!everyone')) {
         const chat = await msg.getChat();
 
+        console.log('Participants:', chat.participants);
+
+
         if (!chat.isGroup) {
             msg.reply('❌ Este comando solo se puede usar en grupos.');
             return;
         }
 
         const authorId = msg.author || msg.from;
+
+         console.log('Author ID:', authorId);
+
         const sender = chat.participants.find(p => p.id._serialized === authorId);
         const isAdmin = manualAdmins.includes(authorId) || (sender && (sender.isAdmin || sender.isSuperAdmin));
 
