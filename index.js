@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 
 // comando !important para marcar mensajes importantes
 const fs = require('fs');
-const TRABAJOS_FILE = '/data/trabajos.json';
+const TRABAJOS_FILE = './trabajos.json';
 
 
 let trabajos = [];
@@ -13,6 +13,10 @@ try {
         const data = fs.readFileSync(TRABAJOS_FILE, 'utf-8');
         trabajos = JSON.parse(data);
     }
+    else {
+        fs.writeFileSync(TRABAJOS_FILE, JSON.stringify(trabajos, null, 2));
+    }
+
 } catch (error) {
     console.error('Error cargando trabajos.json:', error);
 }
@@ -120,8 +124,18 @@ client.on('message', async msg => {
                 2. !commands
                 → Muestra esta lista de comandos.
 
-                3. !horarios
+                3. !horarios  ó !horarios [día] 
                 → Muestra el horario de los cursos del 4to ciclo turno tarde.
+
+                4. !ping
+                → Verifica si el bot está activo.
+
+                5. !important
+                → Muestra la lista de trabajos importantes dejados en clase. 
+                   5.1 !addimportant <curso>: <detalle>
+                   → Agrega un trabajo importante (solo admins).
+                   5.2 !delimportant <número>
+                   → Elimina un trabajo importante por su número (solo admins).
 
                 
                 Escribe el comando directamente.
@@ -130,26 +144,7 @@ client.on('message', async msg => {
     }
 });
 
-client.on('message', async msg => {
-    if (msg.body === '!commands') { // Detecta el comando exacto !commands
-        const commandList = `
-                📜 *Lista de comandos disponibles de GutsBot:*
 
-                1. !everyone 
-                → Menciona a todos los miembros del grupo (solo admins).
-
-                2. !commands
-                → Muestra esta lista de comandos.
-
-                3. !horarios
-                → Muestra el horario de los cursos del 4to ciclo turno tarde.
-
-                
-                Escribe el comando directamente.
-        `;
-        msg.reply(commandList);
-    }
-});
 
 client.on('message', async msg => {
     const messageBody = msg.body.toLowerCase().trim();
@@ -201,14 +196,14 @@ client.on('message', async msg => {
                 day: 'Lunes',
                 classes: [
                     '14:30 - 16:10: Contabilidad y presupuestos',
-                    '16:10 - 19:30: Análisis de sistemas',
-                    '19:30 - 21:10: Sistemas digitales'
+                    '16:10 - 19:30: Análisis de sistemas       ',
+                    '19:30 - 21:10: Sistemas digitales         '
                 ]
             },
             'martes': {
                 day: 'Martes',
                 classes: [
-                    '15:20 - 17:00: Matemática III',
+                    '15:20 - 17:00: Matemática III        ',
                     '19:30 - 21:10: Modelado Computacional'
                 ]
             },
@@ -216,23 +211,23 @@ client.on('message', async msg => {
                 day: 'Miércoles',
                 classes: [
                     '14:30 - 16:10: Modelado Computacional',
-                    '17:00 - 19:30: Sistemas digitales',
-                    '19:30 - 21:10: Análisis de sistemas'
+                    '17:00 - 19:30: Sistemas digitales    ',
+                    '19:30 - 21:10: Análisis de sistemas  '
                 ]
             },
             'miércoles': {
                 day: 'Miércoles',
                 classes: [
                     '14:30 - 16:10: Modelado Computacional',
-                    '17:00 - 19:30: Sistemas digitales',
-                    '19:30 - 21:10: Análisis de sistemas'
+                    '17:00 - 19:30: Sistemas digitales    ',
+                    '19:30 - 21:10: Análisis de sistemas  '
                 ]
             },
             'jueves': {
                 day: 'Jueves',
                 classes: [
-                    '13:40 - 16:10: Ingeniería económica',
-                    '16:10 - 17:50: Matemática III',
+                    '13:40 - 16:10: Ingeniería económica       ',
+                    '16:10 - 17:50: Matemática III             ',
                     '17:50 - 19:30: Contabilidad y presupuestos'
                 ]
             },
@@ -240,7 +235,7 @@ client.on('message', async msg => {
                 day: 'Viernes',
                 classes: [
                     '15:20 - 17:00: Modelado Computacional',
-                    '17:00 - 18:40: Ingeniería económica'
+                    '17:00 - 18:40: Ingeniería económica  '
                 ]
             }
         };
@@ -248,13 +243,14 @@ client.on('message', async msg => {
         // Verificar si el día existe en el horario
         if (schedules[day]) {
             const schedule = schedules[day];
-            const dayScheduleMessage = `
+            const dayScheduleMessage = 
+            `
                 📅 *Horario del ${schedule.day}:*
 
                 ${schedule.classes.map(cls => `  - ${cls}`).join('\n')}
 
                 📚✨
-                            `;
+                        `;
                             msg.reply(dayScheduleMessage);
                         } else {
                             // Mensaje de error si el día no es válido
