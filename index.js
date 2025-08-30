@@ -338,6 +338,138 @@ client.on('message', async msg => {
     }
 });
 
+// Función para obtener el ID de un usuario mencionado o por número
+async function getUserId(msg, chat) {
+    const mentionedUsers = msg.mentionedIds;
+    
+    if (mentionedUsers && mentionedUsers.length > 0) {
+        return mentionedUsers[0];
+    }
+    
+    // Si no hay menciones, intentar obtener el número del mensaje
+    const messageParts = msg.body.split(' ');
+    if (messageParts.length >= 3) {
+        let phoneNumber = messageParts[2].trim();
+        
+        // Asegurar que el número tenga el formato correcto
+        if (!phoneNumber.includes('@')) {
+            // Eliminar caracteres no numéricos excepto el +
+            phoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+            
+            // Si no tiene código de país, asumir que es peruano (+51)
+            if (!phoneNumber.startsWith('+')) {
+                if (phoneNumber.startsWith('51')) {
+                    phoneNumber = '+' + phoneNumber;
+                } else if (phoneNumber.startsWith('9')) {
+                    phoneNumber = '+51' + phoneNumber;
+                } else {
+                    phoneNumber = '+51' + phoneNumber.replace(/^0/, '');
+                }
+            }
+            
+            phoneNumber += '@c.us';
+        }
+        
+        try {
+            const contact = await client.getContactById(phoneNumber);
+            return contact.id._serialized;
+        } catch (error) {
+            console.error('Error al obtener contacto:', error);
+            return null;
+        }
+    }
+    
+    return null;
+}
+
+
+// COMANDOS DE ADMINISTRACIÓN
+
+// Agregar persona al grupo
+client.on('message', async msg => {
+    if (msg.body.startsWith('!add')) {
+        const chat = await msg.getChat();
+        
+        if (!chat.isGroup) {
+            msg.reply('❌ Este comando solo se puede usar en grupos.');
+            return;
+        }
+
+        const isAdmin = await checkIfUserIsAdmin(msg, chat);
+        if (!isAdmin) {
+            msg.reply('🚫 Solo los administradores pueden agregar personas al grupo.');
+            return;
+        }
+
+        const messageParts = msg.body.split(' ');
+        if (messageParts.length < 2) {
+            msg.reply('❌ Formato incorrecto. Usa: !add <número>\nEjemplo: !add 987654321');
+            return;
+        }
+
+        let phoneNumber = messageParts[1].trim();
+        
+        // Formatear el número de teléfono
+        if (!phoneNumber.includes('@')) {
+            // Eliminar caracteres no numéricos excepto el +
+            phoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+            
+            // Si no tiene código de país, asumir que es peruano (+51)
+            if (!phoneNumber.startsWith('+')) {
+                if (phoneNumber.startsWith('51')) {
+                    phoneNumber = '+' + phoneNumber;
+                } else if (phoneNumber.startsWith('9')) {
+                    phoneNumber = '+51' + phoneNumber;
+                } else {
+                    phoneNumber = '+51' + phoneNumber.replace(/^0/, '');
+                }
+            }
+            
+            phoneNumber += '@c.us';
+        }
+
+        try {
+            await chat.addParticipants([phoneNumber]);
+            msg.reply('✅ Solicitud de agregar usuario enviada.');
+        } catch (error) {
+            console.error('Error al agregar usuario:', error);
+            msg.reply('❌ Error al agregar usuario. Verifica el número o los permisos.');
+        }
+    }
+});
+
+
+// Expulsar persona del grupo
+client.on('message', async msg => {
+    if (msg.body.startsWith('!ban')) {
+        const chat = await msg.getChat();
+        
+        if (!chat.isGroup) {
+            msg.reply('❌ Este comando solo se puede usar en grupos.');
+            return;
+        }
+
+        const isAdmin = await checkIfUserIsAdmin(msg, chat);
+        if (!isAdmin) {
+            msg.reply('🚫 Solo los administradores pueden expulsar personas del grupo.');
+            return;
+        }
+
+        const userId = await getUserId(msg, chat);
+        if (!userId) {
+            msg.reply('❌ Debes mencionar a un usuario o proporcionar un número. Usa: !ban @mencion');
+            return;
+        }
+
+        try {
+            await chat.removeParticipants([userId]);
+            msg.reply('✅ Usuario expulsado del grupo.');
+        } catch (error) {
+            console.error('Error al expulsar usuario:', error);
+            msg.reply('❌ Error al expulsar usuario. Verifica los permisos.');
+        }
+    }
+});
 
 client.initialize();
 
